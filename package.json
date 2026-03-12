@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/lewismoten/Flash-Card-Sheet-Maker.git"
   },
-  "license": "ISC",
+  "license": "MIT",
   "author": "Lewis Edward Moten III",
   "type": "module",
   "main": "src/index.js",
