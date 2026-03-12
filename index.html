@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flash Card Sheet Builder</title>
+  <link rel="stylesheet" href="index.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="index.js"></script>
+</head>
+<body>
+  <div class="app">
+    <section class="panel sidebar">
+      <div class="panel-header">
+        <h1>Flash Card Sheet Builder</h1>
+        <p>Paste text, tweak JSON, preview sheets, and export a print-ready PDF for 8.5x11 paper.</p>
+      </div>
+      <div class="panel-body">
+        <div class="toolbar">
+          <button id="renderBtn">Render Preview</button>
+          <button id="pdfBtn">Generate PDF</button>
+          <button id="sampleBtn" class="secondary">Load Sample</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+
+        <div class="field">
+          <label for="textInput">Input Text</label>
+          <textarea id="textInput" spellcheck="false"></textarea>
+          <div class="help">Paste the source text here, or use the file loader below.</div>
+        </div>
+
+        <div class="field">
+          <label for="fileInput">Load Text File</label>
+          <input id="fileInput" type="file" accept=".txt,text/plain" />
+        </div>
+
+        <details open>
+          <summary>JSON Config</summary>
+          <div class="field" style="margin-top: 10px;">
+            <textarea id="configInput" spellcheck="false" style="min-height: 420px;"></textarea>
+            <div class="help">Edit card layout, transforms, borders, duplex settings, and grouping behavior directly.</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Quick Notes</summary>
+          <div class="help" style="margin-top: 10px;">
+            <div style="margin-bottom: 8px;"><span class="pill">mode: words</span> groups words into cards based on <code>wordsPerCard</code>.</div>
+            <div style="margin-bottom: 8px;"><span class="pill">wordOffset</span> makes the first card shorter, useful when you want cards to align with phrases.</div>
+            <div style="margin-bottom: 8px;"><span class="pill">duplex.enabled</span> adds back pages after each front page.</div>
+            <div><span class="pill">duplex.backOrderStyle</span> supports <code>wrap</code>, <code>context</code>, <code>single</code>, <code>count</code>, and <code>smart</code>.</div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="panel preview-wrap">
+      <div class="panel-header">
+        <h2>Preview</h2>
+        <p>Each tile below is a rendered page image. Fronts and backs are shown in final PDF order.</p>
+      </div>
+      <div class="summary" id="summaryBar">
+        <span><strong>Cards:</strong> 0</span>
+        <span><strong>Pages:</strong> 0</span>
+        <span><strong>Mode:</strong> —</span>
+      </div>
+      <div class="pages" id="pages"></div>
+    </section>
+  </div>
+</body>
+</html>
