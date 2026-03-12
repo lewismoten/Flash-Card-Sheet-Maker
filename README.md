@@ -58,6 +58,8 @@ Or use the GitHub Pages deployment.
 
 All processing happens locally in your browser.
 
+Sample Text: Declaration of Independence (1776)
+
 ---
 
 ## Node.js Version
