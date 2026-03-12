@@ -1,0 +1,20 @@
+{
+  "name": "flash-card-sheet-maker",
+  "version": "1.0.0",
+  "description": "Node.js (ES6) program that reads a text file + JSON config and outputs an 8.5x11 PDF sheet of uniform cuttable flash cards.",
+  "homepage": "https://github.com/lewismoten/Flash-Card-Sheet-Maker#readme",
+  "bugs": {
+    "url": "https://github.com/lewismoten/Flash-Card-Sheet-Maker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lewismoten/Flash-Card-Sheet-Maker.git"
+  },
+  "license": "ISC",
+  "author": "Lewis Edward Moten III",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
