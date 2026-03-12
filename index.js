@@ -3,7 +3,7 @@ const STORAGE_KEYS = {
   config: "flashcard_config"
 };
 const DEFAULT_CONFIG = {
-  title: 'Gettysburg Address',
+  title: 'Declaration of Independence',
   mode: 'words',
   wordsPerCard: 3,
   wordOffset: 1,
