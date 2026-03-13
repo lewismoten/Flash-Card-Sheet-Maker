@@ -37,9 +37,10 @@ Typical learning workflow:
 
 ![Card 2 (front)](docs/card-2-front.jpg)
 ![Card 2 (back)](docs/card-2-back.jpg)
-![Card Fronts](docs/card-fronts.jpg)
-![Card Backs](docs/card-backs.jpg)
 ![Web Interface](docs/screenshot.jpg)
+
+* [Card Fronts](docs/card-fronts.jpg)
+* [Card Backs](docs/card-backs.jpg)
 
 ---
 
