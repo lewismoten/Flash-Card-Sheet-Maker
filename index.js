@@ -191,6 +191,22 @@ const splitIntoWordGroups = (text, config) => {
 
   return groups;
 };
+const splitIntoLines = (text, config = {}) => {
+  const removeEmpty = config?.removeEmptyLines ?? true;
+  const trim = config?.trimLines ?? true;
+
+  let lines = text.split(/\r?\n/);
+
+  if (trim) {
+    lines = lines.map(line => line.trim());
+  }
+
+  if (removeEmpty) {
+    lines = lines.filter(line => line.length > 0);
+  }
+
+  return lines;
+};
 
 const assignCardOrders = (cards) => {
   const keyMap = new Map();
@@ -281,6 +297,8 @@ const buildCards = (rawText, config) => {
   let items = [];
   if (config.mode === 'sentences') {
     items = splitIntoSentences(text, config);
+  } else if (config.mode === 'lines') {
+    items = splitIntoLines(text, config);
   } else {
     items = splitIntoWordGroups(text, config);
   }

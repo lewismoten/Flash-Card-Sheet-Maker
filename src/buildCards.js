@@ -1,5 +1,6 @@
 import { splitIntoSentences } from './splitIntoSentences.js';
 import { splitIntoWordGroups } from './splitIntoWordGroups.js';
+import { splitIntoLines } from './splitIntoLines.js';
 import { normalizeWhitespace } from './normalizeWhitespace.js';
 import { transformText } from './transformText.js';
 
@@ -22,6 +23,8 @@ export const buildCards = (rawText, config) => {
     items = splitIntoSentences(text, config);
   } else if (config.mode === 'words') {
     items = splitIntoWordGroups(text, config);
+  } else if (config.mode === "lines") {
+    groups = splitIntoLines(text, config);
   } else {
     throw new Error(`Unsupported mode: ${config.mode}`);
   }

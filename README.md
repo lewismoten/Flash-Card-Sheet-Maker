@@ -151,10 +151,11 @@ Controls how text is grouped.
 
 Options:
 
-```
-words
-sentences
-```
+| Mode | Behavior |
+|---|---|---|
+words	| split text into word groups
+sentences	| split by sentence
+lines	| each line becomes a card
 
 ---
 
