@@ -3,9 +3,15 @@
   "mode": "words",
   "wordsPerCard": 3,
   "wordOffset": 0,
+  "preserveLineBreaks": false,
   "removePunctuation": true,
   "separatePunctuation": false,
   "transform": "title",
+  "anchors": {
+    "enabled": true,
+    "style": "bold-color",
+    "color": "#8B0000"
+  },
   "duplex": {
     "enabled": true,
     "showBackOrder": true,

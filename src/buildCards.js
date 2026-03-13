@@ -11,7 +11,10 @@ export const buildCards = (rawText, config) => {
     text = text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
   }
 
-  if (config.preserveLineBreaks) {
+  if (config.mode === 'lines') {
+    // Consolidate line breaks
+    text = text.replace(/[\s\n]*\n[\s\n]*/g, '\n');
+  } else if (config.preserveLineBreaks) {
     text = text.replace(/\n+/g, ' \n ');
   } else {
     text = text.replace(/\n+/g, ' ');

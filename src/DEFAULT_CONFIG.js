@@ -10,6 +10,11 @@ export const DEFAULT_CONFIG = {
   dedupeEmptyCards: true,
   printBacks: true,
   showBackOrder: true,
+  anchors: {
+    enabled: true,
+    style: "bold-color",
+    color: "#8B0000"
+  },
   page: {
     size: 'letter',
     orientation: 'portrait',

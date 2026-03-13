@@ -13,6 +13,11 @@ const DEFAULT_CONFIG = {
   transform: 'none',
   trimWhitespace: true,
   dedupeEmptyCards: true,
+  anchors: {
+    enabled: true,
+    style: "bold-color",
+    color: "#8B0000"
+  },
   page: {
     size: 'letter',
     orientation: 'portrait',
@@ -63,18 +68,18 @@ const DEFAULT_CONFIG = {
   }
 };
 
-const SAMPLE_TEXT = `We hold these truths 
-to be self-evident,
+const SAMPLE_TEXT = `We hold these [truths] 
+to be [self-evident],
 
-that all men are created equal,
+that all men are [created equal],
 
 that they are endowed
-by their Creator 
-with certain unalienable Rights, 
+by their [Creator] 
+with certain [unalienable Rights], 
 
 that among these are
-Life, Liberty
-and the pursuit of Happiness.`;
+[Life], [Liberty]
+and the pursuit of [Happiness].`;
 
 const state = {
   cards: [],
@@ -135,16 +140,103 @@ const transformText = (text, transform) => {
   return text;
 };
 
+const parseStyledText = (text) => {
+  const input = String(text ?? '');
+  const segments = [];
+  const regex = /\[([^\]]+)\]|([^\[]+)/g;
+
+  let match;
+  while ((match = regex.exec(input)) !== null) {
+    if (match[1]) {
+      segments.push({
+        text: match[1],
+        anchor: true,
+      });
+    } else if (match[2]) {
+      segments.push({
+        text: match[2],
+        anchor: false,
+      });
+    }
+  }
+
+  return segments.filter((segment) => segment.text.length > 0);
+};
+
+const wrapStyledText = (ctx, text, maxWidth, baseFont, anchorFont, config) => {
+  const segments = config?.anchors?.enabled === false
+    ? [{ text: stripAnchorMarkup(text), anchor: false }]
+    : parseStyledText(text);
+
+  const tokens = [];
+
+  for (const segment of segments) {
+    const parts = segment.text.split(/(\s+)/).filter(Boolean);
+    for (const part of parts) {
+      tokens.push({
+        text: part,
+        anchor: segment.anchor,
+      });
+    }
+  }
+
+  const lines = [];
+  let currentLine = [];
+  let currentWidth = 0;
+
+  for (const token of tokens) {
+    ctx.font = token.anchor ? anchorFont : baseFont;
+    const tokenWidth = ctx.measureText(token.text).width;
+
+    if (currentLine.length > 0 && currentWidth + tokenWidth > maxWidth) {
+      lines.push(currentLine);
+      currentLine = [token];
+      currentWidth = tokenWidth;
+    } else {
+      currentLine.push(token);
+      currentWidth += tokenWidth;
+    }
+  }
+
+  if (currentLine.length) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+};
+
+const getAnchorStyle = (config) => {
+  const style = config?.anchors?.style ?? 'bold-color';
+  const color = config?.anchors?.color ?? '#8B0000';
+
+  return {
+    useBold: style === 'bold' || style === 'bold-color',
+    useColor: style === 'color' || style === 'bold-color',
+    color,
+  };
+};
+
+const stripAnchorMarkup = text => 
+  String(text ?? '').replace(/\[([^\]]+)\]/g, '$1');
+
 const tokenize = (text, config) => {
   const results = [];
-  const pattern = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*|[^\sA-Za-z0-9]/g;
-  const matches = text.match(pattern) || [];
+
+  const pattern = /\[[^\]]+\]|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*|[^\sA-Za-z0-9]/g;
+  const matches = String(text ?? '').match(pattern) || [];
 
   for (const token of matches) {
-    const isPunctuation = /^[^A-Za-z0-9]+$/.test(token);
+    const isAnchor = /^\[[^\]]+\]$/.test(token);
+    const isPunctuation = !isAnchor && /^[^A-Za-z0-9]+$/.test(token);
+
+    if (isAnchor) {
+      results.push(token);
+      continue;
+    }
 
     if (isPunctuation) {
       if (config.removePunctuation) continue;
+
       if (config.separatePunctuation) {
         results.push(token);
       } else if (results.length) {
@@ -160,8 +252,12 @@ const tokenize = (text, config) => {
   return results;
 };
 
+const cleanKey = text =>
+  normalizeWhitespace(stripAnchorMarkup(text)).toUpperCase();
+
 const splitIntoSentences = (text, config) => {
   let working = text;
+
   if (config.removePunctuation && !config.separatePunctuation) {
     working = working.replace(/[.,!?;:"'()\[\]{}—–-]/g, '');
   }
@@ -182,26 +278,62 @@ const splitIntoSentences = (text, config) => {
   return results;
 };
 
+const countTokenWords = (token) => {
+  const plain = stripAnchorMarkup(token).trim();
+  if (!plain) return 0;
+
+  if (/^[^A-Za-z0-9]+$/.test(plain)) return 0;
+
+  return plain.split(/\s+/).filter(Boolean).length;
+};
+
 const splitIntoWordGroups = (text, config) => {
   const tokens = tokenize(text, config);
   const wordsPerCard = Math.max(1, Number(config.wordsPerCard || 1));
-  const offset = Number(config.wordOffset ?? 0);
+  const offset = Math.max(0, Number(config.wordOffset ?? 0));
   const groups = [];
 
-  let i = 0;
-  if (offset > 0) {
-    const firstSize = Math.max(1, wordsPerCard - offset);
-    groups.push(tokens.slice(0, firstSize).join(' '));
-    i = firstSize;
+  let currentGroup = [];
+  let currentWordCount = 0;
+  let targetWordCount = wordsPerCard - offset;
+
+  if (targetWordCount < 1) {
+    targetWordCount = 1;
   }
 
-  while (i < tokens.length) {
-    groups.push(tokens.slice(i, i + wordsPerCard).join(' '));
-    i += wordsPerCard;
+  for (const token of tokens) {
+    const tokenWordCount = countTokenWords(token);
+
+    if (tokenWordCount === 0) {
+      if (currentGroup.length === 0) {
+        currentGroup.push(token);
+      } else {
+        currentGroup[currentGroup.length - 1] += token;
+      }
+      continue;
+    }
+
+    if (
+      currentGroup.length > 0 &&
+      currentWordCount + tokenWordCount > targetWordCount
+    ) {
+      groups.push(currentGroup.join(' '));
+      currentGroup = [];
+      currentWordCount = 0;
+      targetWordCount = wordsPerCard;
+    }
+
+    currentGroup.push(token);
+    currentWordCount += tokenWordCount;
+  }
+
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup.join(' '));
   }
 
   return groups;
 };
+
 const splitIntoLines = (text, config = {}) => {
   const removeEmpty = config?.removeEmptyLines ?? true;
   const trim = config?.trimLines ?? true;
@@ -222,13 +354,13 @@ const splitIntoLines = (text, config = {}) => {
 const assignCardOrders = (cards) => {
   const keyMap = new Map();
   for (const card of cards) {
-    const key = normalizeWhitespace(card.text).toUpperCase();
+    const key = cleanKey(card.text);
     if (!keyMap.has(key)) keyMap.set(key, []);
     keyMap.get(key).push(card.index);
   }
 
   return cards.map((card) => {
-    const key = normalizeWhitespace(card.text).toUpperCase();
+    const key = cleanKey(card.text);
     return { ...card, orders: keyMap.get(key) || [card.index] };
   });
 };
@@ -299,21 +431,24 @@ const buildCards = (rawText, config) => {
   if (config.trimWhitespace) {
     text = text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
   }
-  if (config.preserveLineBreaks) {
+  if (config.mode === 'lines') {
+    // Consolidate line breaks
+    text = text.replace(/[\s\n]*\n[\s\n]*/g, '\n');
+  } else if (config.preserveLineBreaks) {
     text = text.replace(/\n+/g, ' \n ');
   } else {
     text = text.replace(/\n+/g, ' ');
   }
-
   let items = [];
   if (config.mode === 'sentences') {
     items = splitIntoSentences(text, config);
   } else if (config.mode === 'lines') {
     items = splitIntoLines(text, config);
-  } else {
+  } else if (config.mode === 'words') {
     items = splitIntoWordGroups(text, config);
+  } else {
+    items = splitIntoLines(`Unknown Config Mode: ${config.mode}`);
   }
-
   const cards = items
     .map((item) => normalizeWhitespace(item))
     .filter((item) => (config.dedupeEmptyCards ? item.length > 0 : true))
@@ -431,6 +566,9 @@ const renderFrontCard = (ctx, card, x, y, width, height, config) => {
   const titleBg = rgbFromHex(config.card.titleColor);
   const titleText = rgbFromHex(config.card.titleTextColor);
   const bodyText = rgbFromHex(config.card.bodyTextColor);
+  const anchorStyle = getAnchorStyle(config);
+  const anchorColor = rgbFromHex(anchorStyle.color);
+
   const padding = Number(config.card.padding) * 2;
   const titleBandHeight = Number(config.card.titleBandHeight) * 2;
   const borderWidth = Number(config.card.borderWidth) * 2;
@@ -460,38 +598,54 @@ const renderFrontCard = (ctx, card, x, y, width, height, config) => {
   let lineHeight = fontSize * Number(config.card.lineHeight);
 
   while (fontSize >= minFontSize) {
-    ctx.font = `${fontSize}px Arial`;
-    const words = String(card.text).split(/\s+/).filter(Boolean);
-    lines = [];
-    let current = words[0] || '';
+    const baseFont = `${fontSize}px Arial`;
+    const anchorFont = `${anchorStyle.useBold ? '700 ' : ''}${fontSize}px Arial`;
 
-    for (let i = 1; i < words.length; i++) {
-      const next = `${current} ${words[i]}`;
-      if (ctx.measureText(next).width <= bodyW) current = next;
-      else {
-        lines.push(current);
-        current = words[i];
-      }
-    }
-    if (current) lines.push(current);
-
+    lines = lines = wrapStyledText(ctx, card.text, bodyW, baseFont, anchorFont, config);
     lineHeight = fontSize * Number(config.card.lineHeight);
     if (lines.length * lineHeight <= bodyH) break;
     fontSize -= 2;
   }
 
-  ctx.fillStyle = `rgb(${bodyText.r}, ${bodyText.g}, ${bodyText.b})`;
-  ctx.font = `${fontSize}px Arial`;
   ctx.textBaseline = 'middle';
   const totalHeight = lines.length * lineHeight;
-  let startY = bodyY + bodyH / 2 - totalHeight / 2 + lineHeight / 2;
+  const startY = bodyY + bodyH / 2 - totalHeight / 2 + lineHeight / 2;
 
-  lines.forEach((line, index) => {
-    const textWidth = ctx.measureText(line).width;
+  lines.forEach((lineTokens, index) => {
+    const lineWidth = lineTokens.reduce((sum, token) => {
+      const tokenFont =
+        token.anchor && anchorStyle.useBold
+          ? `700 ${fontSize}px Arial`
+          : `${fontSize}px Arial`;
+
+      ctx.font = tokenFont;
+      return sum + ctx.measureText(token.text).width;
+    }, 0);
+
     let textX = bodyX;
-    if (config.card.align === 'center') textX = bodyX + (bodyW - textWidth) / 2;
-    if (config.card.align === 'right') textX = bodyX + bodyW - textWidth;
-    ctx.fillText(line, textX, startY + index * lineHeight);
+    if (config.card.align === 'center') {
+      textX = bodyX + (bodyW - lineWidth) / 2;
+    } else if (config.card.align === 'right') {
+      textX = bodyX + bodyW - lineWidth;
+    }
+
+    let cursorX = textX;
+
+    lineTokens.forEach((token) => {
+      const tokenFont =
+        token.anchor && anchorStyle.useBold
+          ? `700 ${fontSize}px Arial`
+          : `${fontSize}px Arial`;
+
+      ctx.font = tokenFont;
+      ctx.fillStyle =
+        token.anchor && anchorStyle.useColor
+          ? `rgb(${anchorColor.r}, ${anchorColor.g}, ${anchorColor.b})`
+          : `rgb(${bodyText.r}, ${bodyText.g}, ${bodyText.b})`;
+
+      ctx.fillText(token.text, cursorX, startY + index * lineHeight);
+      cursorX += ctx.measureText(token.text).width;
+    });
   });
 };
 

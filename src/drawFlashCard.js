@@ -1,6 +1,7 @@
 import { hexToRgb } from "./hexToRgb.js";
-import { fitParagraph } from './fitParagraph.js';
 import { fitSingleLine } from './fitSingleLine.js';
+import { getAnchorStyle } from "./getAnchorStyle.js";
+import { fitStyledParagraph } from "./fitStyledParagraph.js";
 
 export const drawFlashCard = (page, card, x, y, width, height, config, font, fontBold) => {
   const borderColor = hexToRgb(config.card.borderColor);
@@ -11,6 +12,7 @@ export const drawFlashCard = (page, card, x, y, width, height, config, font, fon
   const borderWidth = Number(config.card.borderWidth);
   const padding = Number(config.card.padding);
   const titleBandHeight = Number(config.card.titleBandHeight);
+  const anchorStyle = getAnchorStyle(config);
 
   page.drawRectangle({
     x,
@@ -46,7 +48,17 @@ export const drawFlashCard = (page, card, x, y, width, height, config, font, fon
     height: height - titleBandHeight - padding * 2,
   };
 
-  const fitted = fitParagraph(card.text, bodyArea.width, bodyArea.height, config, font);
+  const anchorColor = hexToRgb(anchorStyle.color);
+
+  const fitted = fitStyledParagraph(
+    card.text,
+    bodyArea.width,
+    bodyArea.height,
+    config,
+    font,
+    fontBold
+  );
+
   const lineHeight = fitted.fontSize * Number(config.card.lineHeight);
   const totalTextHeight = fitted.lines.length * lineHeight;
 
@@ -60,8 +72,13 @@ export const drawFlashCard = (page, card, x, y, width, height, config, font, fon
   }
 
   for (let i = 0; i < fitted.lines.length; i++) {
-    const line = fitted.lines[i];
-    const lineWidth = font.widthOfTextAtSize(line, fitted.fontSize);
+    const lineTokens = fitted.lines[i];
+
+    const lineWidth = lineTokens.reduce((sum, token) => {
+      const activeFont = token.anchor && anchorStyle.useBold ? fontBold : font;
+      return sum + activeFont.widthOfTextAtSize(token.text, fitted.fontSize);
+    }, 0);
+
     let textX = bodyArea.x;
 
     if (config.card.align === 'center') {
@@ -70,12 +87,21 @@ export const drawFlashCard = (page, card, x, y, width, height, config, font, fon
       textX = bodyArea.x + bodyArea.width - lineWidth;
     }
 
-    page.drawText(line, {
-      x: textX,
-      y: startY - i * lineHeight,
-      size: fitted.fontSize,
-      font,
-      color: bodyTextColor,
-    });
+    let cursorX = textX;
+
+    for (const token of lineTokens) {
+      const activeFont = token.anchor && anchorStyle.useBold ? fontBold : font;
+      const activeColor = token.anchor && anchorStyle.useColor ? anchorColor : bodyTextColor;
+
+      page.drawText(token.text, {
+        x: cursorX,
+        y: startY - i * lineHeight,
+        size: fitted.fontSize,
+        font: activeFont,
+        color: activeColor,
+      });
+
+      cursorX += activeFont.widthOfTextAtSize(token.text, fitted.fontSize);
+    }
   }
 }

@@ -1,13 +1,21 @@
 export const tokenize = (text, config) => {
   const results = [];
-  const pattern = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*|[^\sA-Za-z0-9]/g;
-  const matches = text.match(pattern) || [];
+
+  const pattern = /\[[^\]]+\]|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*|[^\sA-Za-z0-9]/g;
+  const matches = String(text ?? '').match(pattern) || [];
 
   for (const token of matches) {
-    const isPunctuation = /^[^A-Za-z0-9]+$/.test(token);
+    const isAnchor = /^\[[^\]]+\]$/.test(token);
+    const isPunctuation = !isAnchor && /^[^A-Za-z0-9]+$/.test(token);
+
+    if (isAnchor) {
+      results.push(token);
+      continue;
+    }
 
     if (isPunctuation) {
       if (config.removePunctuation) continue;
+
       if (config.separatePunctuation) {
         results.push(token);
       } else if (results.length) {
@@ -21,4 +29,4 @@ export const tokenize = (text, config) => {
   }
 
   return results;
-}
+};

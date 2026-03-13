@@ -1,5 +1,4 @@
 import { tokenize } from './tokenize.js';
-import { normalizeWhitespace } from './normalizeWhitespace.js';
 
 export const splitIntoSentences = (text, config) => {
   let working = text;
@@ -16,12 +15,11 @@ export const splitIntoSentences = (text, config) => {
     if (!cleaned) continue;
 
     if (config.separatePunctuation) {
-      const tokens = tokenize(cleaned, { ...config, mode: 'words', wordsPerCard: 1 });
-      results.push(...tokens);
+      results.push(...tokenize(cleaned, { ...config, wordsPerCard: 1 }));
     } else {
       results.push(cleaned);
     }
   }
 
   return results;
-}
+};

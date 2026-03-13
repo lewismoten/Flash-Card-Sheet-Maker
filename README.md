@@ -37,8 +37,9 @@ No server required.
 - Generate **uniform flash cards on 8.5×11 sheets**
 - **Preview pages before printing**
 - Works **entirely offline**
-- **Word grouping** or **sentence grouping**
+- **Word grouping**, **sentence grouping**, or **line grouping**
 - **Word offset** for phrase alignment
+- **Anchor phrase highlighting** with square bracket markup
 - Optional **punctuation handling**
 - Multiple **card order display styles**
 - **Automatic text wrapping and scaling**
@@ -159,6 +160,18 @@ lines	| each line becomes a card
 
 ---
 
+## preserveLineBreaks
+
+
+Controls if groups of words are displayed with line-breaks
+from the original text.
+
+```json
+{
+  "preserveLineBreaks": "false"
+}
+```
+
 ## wordsPerCard
 
 Number of words placed on each card.
@@ -213,12 +226,59 @@ Changes text casing.
 
 Options:
 
+| Mode | Behavior |
+|---|---|---|
+none	| Text appears in OrIgInAl form
+upper	| TEXT APPEARS IN UPPER CASE FORM
+lower	| text appears in lower case form
+title | Text Appears In Title Cased form
+
+---
+
+## Anchor Phrases
+
+Words or phrases surrounded by square brackets can be highlighted on the front of a card.
+
+Example source text:
+
+```text
+We hold these truths 
+to be [self-evident],
+that all men are [created equal],
 ```
-none
-upper
-lower
-title
+
+Example Output:
+
+* We hold these
+* **truths** to be
+* **self-evident** that all
+* men are
+* **created equal**
+
+With the anchor phrase highlighted according to the configured style.
+```json
+{
+  "anchors": {
+    "enabled": true,
+    "style": "bold-color",
+    "color": "#8B0000"
+  }
+}
 ```
+
+### Anchor Options
+
+| Property | Description |
+| --- | --- |
+| enabled | enables anchor highlighting |
+| style | bold, color, or bold-color |
+| color | hex color used when color highlighting is enabled |
+
+### Notes
+
+* Anchor markup works in both the web and Node.js versions.
+* Bracketed phrases stay together visually and can be highlighted as a single phrase.
+* In word mode, bracketed phrases are counted by the number of words they contain, not as a single word.
 
 ---
 

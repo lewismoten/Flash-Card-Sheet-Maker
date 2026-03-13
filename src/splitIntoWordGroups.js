@@ -1,24 +1,49 @@
 import { tokenize } from './tokenize.js';
+import { countTokenWords } from './countTokenWords.js';
 
 export const splitIntoWordGroups = (text, config) => {
   const tokens = tokenize(text, config);
   const wordsPerCard = Math.max(1, Number(config.wordsPerCard || 1));
+  const offset = Math.max(0, Number(config.wordOffset ?? 0));
   const groups = [];
 
-  const offset = Number(config.wordOffset ?? 0);
+  let currentGroup = [];
+  let currentWordCount = 0;
+  let targetWordCount = wordsPerCard - offset;
 
-  let i = 0;
-
-  if (offset > 0) {
-    const firstSize = Math.max(1, wordsPerCard - offset);
-    groups.push(tokens.slice(0, firstSize).join(' '));
-    i = firstSize;
+  if (targetWordCount < 1) {
+    targetWordCount = 1;
   }
 
-  while (i < tokens.length) {
-    groups.push(tokens.slice(i, i + wordsPerCard).join(' '));
-    i += wordsPerCard;
+  for (const token of tokens) {
+    const tokenWordCount = countTokenWords(token);
+
+    if (tokenWordCount === 0) {
+      if (currentGroup.length === 0) {
+        currentGroup.push(token);
+      } else {
+        currentGroup[currentGroup.length - 1] += token;
+      }
+      continue;
+    }
+
+    if (
+      currentGroup.length > 0 &&
+      currentWordCount + tokenWordCount > targetWordCount
+    ) {
+      groups.push(currentGroup.join(' '));
+      currentGroup = [];
+      currentWordCount = 0;
+      targetWordCount = wordsPerCard;
+    }
+
+    currentGroup.push(token);
+    currentWordCount += tokenWordCount;
+  }
+
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup.join(' '));
   }
 
   return groups;
-}
+};
