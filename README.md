@@ -1,7 +1,49 @@
 
 # Flash Card Sheet Maker
+Generate printable flash cards from any text
 
-A tool for turning text into **printable flash card sheets**.
+Flash Card Sheet Maker is a tool for turning structured text into printable flash cards.
+
+It is designed for memorization exercises, speech practice, language learning, and puzzle-style reconstruction activities.
+
+The tool can automatically group text into cards, generate printable sheets, and optionally include order hints on the reverse side.
+
+# Quick Start
+
+Open the web version:
+
+https://lewismoten.github.io/Flash-Card-Sheet-Maker/
+
+1. Paste text into the editor
+2. Adjust the JSON configuration if desired
+3. Click "Generate PDF"
+4. Print and cut the cards
+
+# Learning Workflow
+
+Typical learning workflow:
+
+1. Generate phrase cards using `mode: words`
+2. Shuffle the cards and reconstruct the passage
+3. Verify order using the numbers on the back
+4. Repeat until the passage becomes familiar
+5. Use underline placeholders to test recall
+
+[Suggested Learning Progression](docs/suggested-learning-progression.md)
+
+---
+
+# Screenshots
+
+![Card 2 (front)](docs/card-2-front.jpg)
+![Card 2 (back)](docs/card-2-back.jpg)
+![Card Fronts](docs/card-fronts.jpg)
+![Card Backs](docs/card-backs.jpg)
+![Web Interface](docs/screenshot.jpg)
+
+---
+
+# Node.js & Web App
 
 This project includes two versions that share the **same JSON configuration**:
 
@@ -47,6 +89,7 @@ No server required.
 - **Cut marks** for trimming
 - **Duplex printing support**
 - Works in **browser or Node.js**
+- Smart **duplicate phrase** handling
 
 ---
 
@@ -154,10 +197,10 @@ Controls how text is grouped.
 Options:
 
 | Mode | Behavior |
-|---|---|---|
-words	| split text into word groups
-sentences	| split by sentence
-lines	| each line becomes a card
+|------|----------|
+| words | split text into word groups |
+| sentences | split by sentence |
+| lines | each line becomes a card |
 
 ---
 
@@ -169,7 +212,7 @@ from the original text.
 
 ```json
 {
-  "preserveLineBreaks": "false"
+  "preserveLineBreaks": false
 }
 ```
 
@@ -199,9 +242,11 @@ Offsets the first card so phrases align naturally.
 
 Example:
 
-```
-wordsPerCard: 3
-wordOffset: 1
+```json
+{
+  "wordsPerCard": 3,
+  "wordOffset": 1
+}
 ```
 
 Result:
@@ -232,7 +277,7 @@ Options:
 none	| Text appears in OrIgInAl form
 upper	| TEXT APPEARS IN UPPER CASE FORM
 lower	| text appears in lower case form
-title | Text Appears In Title Cased form
+title | Text Appears In Title Case Form
 
 ---
 
@@ -250,11 +295,22 @@ that all men are [created equal],
 
 Example Output:
 
-* We hold these
-* **truths** to be
-* **self-evident** that all
-* men are
-* **created equal**
+```text
+Card 1:
+We hold these
+
+Card 2:
+**truths** to be
+
+Card 3:
+**self-evident** that all
+
+Card 4:
+men are
+
+Card 5:
+**created equal**
+```
 
 With the anchor phrase highlighted according to the configured style.
 ```json
@@ -391,10 +447,10 @@ Enable card backs.
 This produces:
 
 ```
-Page 1  Front
-Page 2  Back
-Page 3  Front
-Page 4  Back
+Page 1 - Card Fronts
+Page 2 - Card Backs
+Page 3 - Card Fronts
+Page 4 - Card Backs
 ```
 
 Designed for **double‑sided printing**.
@@ -421,15 +477,16 @@ Order: 3, 9, 14
 }
 ```
 
+
 Options:
 
 | Style | Behavior |
 |-----|------|
-wrap | wraps long lists |
-context | shows nearby positions |
-single | single long line |
-count | show total occurrences |
-smart | automatic switching |
+| wrap | wraps long lists |
+| context | shows nearby positions |
+| single | single long line |
+| count | show total occurrences |
+| smart | automatic switching |
 
 ---
 
@@ -440,6 +497,10 @@ Order: ..., 19, 23, [27], 31, 36, ...
 ```
 
 The current card position is highlighted when the same text appears in multiple locations.
+
+## Smart duplicate phrase handling
+
+An attempt will be made to list all possible locations with `wrap` mode, but if a threshold is met, only nearby positions will be displayed using the context mode
 
 ---
 
@@ -486,12 +547,6 @@ This tool is useful for:
 - script rehearsal
 - ritual memorization
 - study aids
-
----
-
-# Screenshots
-
-![Web Interface](docs/screenshot.jpg)
 
 ---
 
