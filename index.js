@@ -221,15 +221,15 @@ const stripAnchorMarkup = text =>
 
 const tokenize = (text, config) => {
   const results = [];
-
-  const pattern = /\[[^\]]+\]|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*|[^\sA-Za-z0-9]/g;
+  const pattern = /\[[^\]]+\]|_+|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*|[^\sA-Za-z0-9_]/g;
   const matches = String(text ?? '').match(pattern) || [];
 
   for (const token of matches) {
     const isAnchor = /^\[[^\]]+\]$/.test(token);
-    const isPunctuation = !isAnchor && /^[^A-Za-z0-9]+$/.test(token);
+    const isUnderlineWord = /^_+$/.test(token);
+    const isPunctuation = !isAnchor && !isUnderlineWord && /^[^A-Za-z0-9]+$/.test(token);
 
-    if (isAnchor) {
+    if (isAnchor || isUnderlineWord) {
       results.push(token);
       continue;
     }
@@ -282,7 +282,9 @@ const countTokenWords = (token) => {
   const plain = stripAnchorMarkup(token).trim();
   if (!plain) return 0;
 
-  if (/^[^A-Za-z0-9]+$/.test(plain)) return 0;
+  if (/^_+$/.test(plain)) return 1;
+
+  if (/^[^A-Za-z0-9_]+$/.test(plain)) return 0;
 
   return plain.split(/\s+/).filter(Boolean).length;
 };

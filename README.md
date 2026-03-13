@@ -40,6 +40,7 @@ No server required.
 - **Word grouping**, **sentence grouping**, or **line grouping**
 - **Word offset** for phrase alignment
 - **Anchor phrase highlighting** with square bracket markup
+- **Underline placeholders** using one or more underscores as a word token
 - Optional **punctuation handling**
 - Multiple **card order display styles**
 - **Automatic text wrapping and scaling**
